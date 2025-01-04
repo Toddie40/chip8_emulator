@@ -1,8 +1,9 @@
-
+#include <string>
+#include <SDL2/SDL.h>
 
 // a class for our chip8
-class chip8() {
-
+class Chip8 
+{
     // we need somewhere to store our current opcode. 
     unsigned short currentOpcode;
 
@@ -19,7 +20,7 @@ class chip8() {
         THe way sprites are drawn to the display involves XORing the sprite with the current display buffer so need to pick a datatype that will play nicely with that.
         Ideally I can just use a bit. perhaps there is a c++ option for that. Turns out you cannot work with single bits in c++ so smallest we can do is one byte. char will have to do. 
     */
-    unsigned char display[64 * 32];  
+    unsigned int display[64 * 32]; // 2048 bits stored as integers where 1 is on and 0 is off
 
     /*
         The program counter which points to the currenty instruction in memory. This is then always just a memory address. i.e. an integer between 0 and 4095 (since that's the size memory we have)
@@ -58,24 +59,93 @@ class chip8() {
     public:
 
         void Initialize(){
+            // initialise all the registers and memory once the chip8 is created.
+        };
+
+        void LoadProgram(std::string program_path) {
+
+        };
+
+        int Step() {
+            // fetch the opcode
+            currentOpcode = memory[programCounter] << 8 | memory[programCounter + 1];
+            programCounter += 2;
+
+            // decode and execute the opcode
+            RunOpcode(currentOpcode);
+
+            // update timers
+            // draw to the screen
+            // store key press state
+            // loop
+            return 0;
+        };
+
+    private:
+
+        void InitialiseGraphics() {
+            // draw empty display to the screen
+
+            SDL_Window* window = nullptr;
+            SDL_Renderer* renderer = nullptr;
+
+            SDL_Init(SDL_INIT_VIDEO);
+            SDL_CreateWindowAndRenderer(64, 32, 0, &window, &renderer);
+        
+            // set draw color to black to clear screen
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+            SDL_RenderClear(renderer);
+        };
+
+        void ClearGraphics() {
+            // clear the display
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+            SDL_RenderClear(renderer);
+        };
+
+        void DrawGraphics() {
+            // clear screen
+            ClearGraphics();
+            // draw the display to the screen
+            for (int i = 0; i < 64 * 32; i++) {
+                // if the pixel is set to 1 draw it to the screen
+                if (display[i] == 1) {
+                    // i mod 64 for the x coord. #
+                    // i / 32 for the y coord which floors the result as per integer division.
+                    SDL_RenderDrawPoint(renderer, i % 64, i / 32);
+                }
+            }
+
+            SDL_RenderPresent(renderer);
             
         };
 
-        void LoadProgram(string program_path) {
-
+        void RunOpcode(unsigned short opcode) {
+            // switch statement for all the opcodes
+            switch (opcode) {
+                case 0x00E0:
+                    // clear the screen
+                    break;
+                case 0x00EE:
+                    // return from subroutine
+                    break;
+                default:
+                    // do nothing
+                    break;
+            }
+            
         };
 
-
-}
+};
 
 int main () {
 
-    chip8 myChip8;
+    Chip8 myChip8;
 
     myChip8.Initialize();
-    myChip8.LoadProgram('IBM Logo.ch8');
-
-    // enter main loop here. calling the next 
+    myChip8.LoadProgram("IBM Logo.ch8");
+    myChip8.Run();
+    
 
     return 0;
 };
