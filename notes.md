@@ -25,15 +25,3 @@ The `Chip8` system comprises of:
 - An 8-bit [Sound Timer](#SoundTimer) which makes a beeping noise when non-zero. Decrements the same way as the `delay timer` does
 - And finally, 16 general purpose 8-bit [variable registers](#VariableRegisters) numbered 0 to F (in hex) and called V0 to VF (VF is often used as the flag register)
 
-## Plan Of Attack:
-
-You're going to go through the list below and tackle each component of this device one at a time. Learning how each bit works and how it interacts with the other components. Good luck.
-
-## Memory
-## Display
-## ProgramCounter
-## I-Register
-## Stack
-## DelayTimer
-## SoundTimer
-## VariableRegisters
