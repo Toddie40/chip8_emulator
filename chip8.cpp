@@ -60,7 +60,7 @@ class Chip8
         And finally a variable to store which keys are currently being pressed. The chip8 has 16 keys labelled 0-F
     */
 
-    unsigned char key[16] = { 0};
+    unsigned char key[16] = { 0 };
 
     unsigned int disp_index = 0;
 
@@ -70,7 +70,7 @@ class Chip8
         void Initialize(){
             // initialise all the registers and memory once the chip8 is created.
             InitialiseGraphics();
-            InitialiseFont();
+            InitialiseFont();            
             programCounter = 0x200; // start at the beginning of the program memory
 
         };
@@ -102,9 +102,13 @@ class Chip8
             // main loop
             while (true) {
                 //store key press state
-                //TODO...
+                std::cout << "Handling input" << std::endl;
+                HandleInput(true);
+                
+
                 // run the next instruction (this needs to happen 700 times a second)
                 if (step_update > 1.0f / 700.0f) {
+                    std::cout << "RUnning step" << std::endl;
                     Step();
                     step_update = 0;
                     delayTimer = (delayTimer > 0) ? delayTimer - 1 : 0;
@@ -113,21 +117,63 @@ class Chip8
                 
                 // draw the display (need to do this only 60 times a second)
                 if (gpu_update > 1.0f / 60.0f) {
+                    std::cout << "Drawing graphics" << std::endl;
                     DrawGraphics();                    
                     gpu_update = 0;
                 }
                 
                 // update timers
+                std::cout << "Updating timers" << std::endl;
                 float delta_t = (SDL_GetTicks() - previous_time) / 1000.0f;
                 
                 previous_time = SDL_GetTicks(); //update previous time for next tick
                 step_update += delta_t;
                 gpu_update += delta_t;
+                std::cout << "loop over" << std::endl;    
             }
         };
         
 
     private:
+
+        void HandleInput(bool debug=false) {
+            SDL_Event event;
+            while (SDL_PollEvent(&event)) {
+                if (event.type == SDL_QUIT) {
+                    exit(0);
+                }
+                else if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
+                    int isPressed = (event.type == SDL_KEYDOWN) ? 1 : 0;
+                    switch (event.key.keysym.sym) {
+                                    case SDLK_1: key[0x1] = isPressed; break;
+                                    case SDLK_2: key[0x2] = isPressed; break;
+                                    case SDLK_3: key[0x3] = isPressed; break;
+                                    case SDLK_4: key[0xC] = isPressed; break;
+                                    case SDLK_q: key[0x4] = isPressed; break;
+                                    case SDLK_w: key[0x5] = isPressed; break;
+                                    case SDLK_e: key[0x6] = isPressed; break;
+                                    case SDLK_r: key[0xD] = isPressed; break;
+                                    case SDLK_a: key[0x7] = isPressed; break;
+                                    case SDLK_s: key[0x8] = isPressed; break;
+                                    case SDLK_d: key[0x9] = isPressed; break;
+                                    case SDLK_f: key[0xE] = isPressed; break;
+                                    case SDLK_z: key[0xA] = isPressed; break;
+                                    case SDLK_x: key[0x0] = isPressed; break;
+                                    case SDLK_c: key[0xB] = isPressed; break;
+                                    case SDLK_v: key[0xF] = isPressed; break;
+                    }
+                }
+                if (debug) {
+                    // debug print the current key status
+                    char output[17];
+                    for (int i = 0; i < 16; i++) {
+                        output[i] = key[i] ? '1' : '0';
+                    }
+                    output[16] = '\0'; // null terminate the string so we don't get random crap   
+                    std::cout << output << std::endl;
+                }
+            }
+        }
 
         // random byte generator function
         unsigned char RandomByte() {
@@ -143,7 +189,8 @@ class Chip8
 
         void InitialiseGraphics() {
             // draw empty display to the screen            
-            SDL_Init(SDL_INIT_VIDEO);
+            // initialise graphics and events
+            SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
             SDL_CreateWindowAndRenderer(64 * 10, 32 * 10, 0, &window, &renderer);
             SDL_RenderSetScale(renderer, 10, 10);
 
@@ -402,8 +449,22 @@ class Chip8
                             break;
                         }
                         case 0x0A: {
-                            // difficult one to implement. need to essentially halt until a key is pressed
-                            // not implemented
+                            // pause until a key is pressed and then store the value of the key in Vx
+                            while (true) {
+                                // still need to handle input here so
+                                HandleInput();
+                                bool canBreak = false;
+                                for (int i = 0; i < 16; i++) {
+                                    if (key[i] == 1) {
+                                        vRegister[nibble_2] = i;
+                                        canBreak = true;
+                                        break;
+                                    }
+                                }
+                                if (canBreak) {
+                                    break;
+                                }
+                            }
                         }
                         case 0x15: {
                             delayTimer = vRegister[nibble_2];
@@ -478,7 +539,7 @@ int main () {
     Chip8 myChip8;
 
     myChip8.Initialize();
-    myChip8.LoadProgram("programs/octojam5title.ch8");
+    myChip8.LoadProgram("programs/snek.ch8");
     myChip8.Run();    
 
     return 0;
